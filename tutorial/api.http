@@ -1,0 +1,46 @@
+POST http://127.0.0.1:8000/api/api/token/ HTTP/1.1
+Content-Type: application/json
+
+{
+    "username":"sole",
+    "password":"sole"
+}
+
+###
+
+GET http://127.0.0.1:8000/api/api/TaskViewSet/ HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3MDYzNDY3LCJpYXQiOjE3NDcwNjMxNjcsImp0aSI6ImJiZWFlMDdmYzdjODRiN2U4MjU5OWUxOWZhNjUwMzYxIiwidXNlcl9pZCI6MX0.AtG3cKvEXnFgtsCHmiTgvW-V6S1CZcBjz271vDsb8cU
+
+###
+
+POST http://127.0.0.1:8000/api/api/TaskViewSet/ HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3MDYzNTMwLCJpYXQiOjE3NDcwNjMyMzAsImp0aSI6IjA4YzlmNzAzY2JmMzQ3MTU4YmFiNzQ2NWYzYjEyMzViIiwidXNlcl9pZCI6MX0.map1ykyLovqVlYX2ZtD57TdNPWqzPOMU60d_X_Gy154
+
+Content-Type: application/json
+
+{
+"title":"Test",
+"description":"Pruebo de testeo",
+"due_date":"2023-10-12",
+"created_by":"1",
+"assigned_to":"1",
+"status":"PENDING",
+"priority":"high"
+}
+
+###
+
+PUT http://127.0.0.1:8000/api/api/createTask/ HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2ODIxMzQ0LCJpYXQiOjE3NDY4MjEwNDQsImp0aSI6IjRlMzJiMzA4NDBmMzRlMzRiNTg4YmM3Zjg4YTgwNTdlIiwidXNlcl9pZCI6MX0.POhk9fN2CMRk4iGsBKS2kQrOcD0aAvCHIAY03vBED5Q
+
+Content-Type: application/json
+
+{
+"title":"Test",
+"description":"Prueba de test put",
+"due_date":"2023-10-13",
+"created_by":"admin",
+"assigned_to":"admin",
+"status":"pending",
+"priority":"high",
+}

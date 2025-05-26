@@ -1,0 +1,9 @@
+django
+djangorestframework
+setuptools
+djangorestframework-simplejwt
+mysqlclient
+drf-spectacular
+pandas
+pika
+celery
