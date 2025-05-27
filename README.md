@@ -1,43 +1,118 @@
-Projecto de asignacion de tareas
+DRF API Project
+Este es un proyecto de API RESTful construido con Django REST Framework (DRF). Proporciona una base sólida para desarrollar APIs escalables y mantenibles, siguiendo buenas prácticas y patrones de diseño comunes.
 
-Se solicita poder generar usuarios con permisos diferentes tal como:
-- User
-- Administrador
-  
-Creacion de tareas y asignacion de las mismas con diferentes estados y urgencias tal como
+Características principales
+Autenticación JWT: Soporte para autenticación basada en tokens usando Simple JWT.
 
-Estados:
-- PENDING
-- IN_PROGRESS
-- COMPLETED
+Swagger/OpenAPI: Documentación interactiva de la API usando drf-yasg.
 
-Urgencias:
-- LOW
-- MEDIUM
-- HIGH
-- CRITICAL
-- URGENTE
+Configuración modular: Estructura de proyecto organizada en apps separadas.
 
-Implementar un registro de auditoria por usuario
 
-El sistema puede exportar e importar archivos tipo CSV apuntando a la base de datos
+Requisitos previos
+Python 3.11
 
-Levantar en WSL/Ubuntu 24.04
+Docker (opcional, si deseas usar contenedores)
 
-Instalar dependencias
+PostgreSQL (recomendado para producción)
+
+Configuración inicial
+Clona el repositorio:
+
+bash
+
+    git clone https://github.com/Kenneth-Luera/DRF.git
+cd DRF
+Crea un entorno virtual (recomendado):
+
+bash
+venv\Scripts\activate
+Instala las dependencias:
+
+bash
 
     pip install -r requirements.txt
+    
+Configura las variables de entorno:
+
+Copia el archivo .env.example a .env y ajusta los valores según tu entorno.
+
+Aplica las migraciones:
+
+bash
+
+    python manage.py migrate
+Crea un superusuario (opcional):
+
+bash
+
+    python manage.py createsuperuser
+Inicia el servidor de desarrollo:
+
+bash
+
+    python manage.py runserver
 
 
-Se recomienda hacer uso de MySQL usado desde Laragon o algun gestor de datos diferente al que viene por defecto (SQLite3)
+Accede a la API:
 
-TECNOLOGIAS UTILIZADAS
-- Python 3.11.0
-- Django / DRF
-- MySQL -> Laragon
-- Rabbitmq
+La API estará disponible en http://localhost:8000
 
-Documentacion:
+Estructura del proyecto
 
-  -  http://127.0.0.1:8000/api/api/docs/redoc/
-  -  http://127.0.0.1:8000/api/api/docs/swagger/
+        Pracitca2
+        |   .gitignore
+        |   db.sqlite3
+        |   estructura.txt
+        |   manage.py
+        |   README.md
+        |   requirements.txt
+        |
+        +---tutorial
+            |  api.http
+            |  asgi.py
+            |  settings.py
+            |  urls.py
+            |  wsgi.py
+            |   __init__.py
+            |  
+            +---DRF
+                  |  admin.py
+                  |  apps.py
+                  |  models.py
+                  |  receive.py
+                  |  send.py
+                  |  serializers.py
+                  |  tareas_convertidas.csv
+                  |  tests.py
+                  |  urls.py
+                  |  views.py
+                  |  __init__.py
+                  
+Documentación de la API
+La documentación interactiva está disponible en las siguientes rutas:
+
+Swagger UI: /swagger/
+
+-  http://127.0.0.1:8000/api/api/docs/redoc/
+
+ReDoc: /redoc/
+
+-  http://127.0.0.1:8000/api/api/docs/swagger/
+
+
+Contribución
+Si deseas contribuir a este proyecto:
+
+Haz un fork del repositorio
+
+Crea una rama para tu feature (git checkout -b feature/nueva-funcionalidad)
+
+Haz commit de tus cambios (git commit -am 'Añade nueva funcionalidad')
+
+Haz push a la rama (git push origin feature/nueva-funcionalidad)
+
+Abre un Pull Request
+
+Licencia
+Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles.
