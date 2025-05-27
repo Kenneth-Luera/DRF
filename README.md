@@ -170,19 +170,7 @@ Si el due_date está a menos de 24 horas y la tarea no está completada:
 Enviar notificación por websocket o email (bonus: usar django-channels).
 
 
-6. Reportes
-Endpoint:
-
-GET /api/tasks/metrics/ (solo para admins).
-
-Reporte incluye:
-
-Cantidad de tareas completadas vs. pendientes por usuario.
-
-Promedio de tiempo de completación agrupado por prioridad.
-
-
-7. Validaciones Avanzadas
+6. Validaciones Avanzadas
 Si una tarea es marcada como COMPLETED:
 
 El campo completed_at se autocompleta con la fecha y hora actual.
@@ -190,7 +178,7 @@ El campo completed_at se autocompleta con la fecha y hora actual.
 No se permite revertir una tarea a PENDING si han pasado más de 7 días desde su completación.
 
 
-8. Integración Externa (Bonus)
+7. Integración Externa (Bonus)
 Endpoint:
 
 POST /api/tasks/import/ que acepta un archivo CSV para carga masiva de tareas.
