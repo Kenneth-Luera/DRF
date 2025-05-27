@@ -60,7 +60,7 @@ La API estará disponible en http://localhost:8000
 
 Estructura del proyecto
 
-        Pracitca2
+        DRF
         |   .gitignore
         |   db.sqlite3
         |   estructura.txt
