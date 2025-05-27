@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'tutorial.DRF',
     'django.contrib.admin',
+    'drf_spectacular',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
