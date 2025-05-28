@@ -26,8 +26,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     pagination_class = PageNumberPagination
     pagination_class.page_size = 10
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
 
     def create(self, request, *args, **kwargs):
         tiempo = request.data.get('due_date')
@@ -119,6 +119,26 @@ class AuditoriaViewSets(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class TaskMetricsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        tasks = Task.objects.filter(status='COMPLETED')
+        total_time = 0
+        count = 0
+        for task in tasks:
+            if hasattr(task, 'created_at') and hasattr(task, 'updated_at') and task.created_at and task.updated_at:
+                delta = (task.updated_at - task.created_at).total_seconds()
+                total_time += delta
+                count += 1
+        promedio_minutos = (total_time / count) / 60 if count else 0
+        return Response({
+            "tareas_completadas": count,
+            "promedio_minutos": promedio_minutos
+        })
+
 
 
 from rest_framework.views import APIView
