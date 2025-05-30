@@ -9,7 +9,7 @@ Swagger/OpenAPI: Documentación interactiva de la API usando drf-yasg.
 Configuración modular: Estructura de proyecto organizada en apps separadas.
 
 
-Requisitos previos
+Requisitos previos 
 Python 3.11
 
 Docker (opcional, si deseas usar contenedores)
