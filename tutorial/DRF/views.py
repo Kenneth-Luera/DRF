@@ -201,6 +201,7 @@ import time
 
 class ExportTaskCSVView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request, format=None):
         time.sleep(15)
