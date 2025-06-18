@@ -25,6 +25,12 @@ bash
 cd DRF
 Crea un entorno virtual (recomendado):
 
+bash/wsl
+
+    python -m venv venv
+
+Ingresar al entorno virtual:
+
 bash
 
     source venv/Scripts/activate
