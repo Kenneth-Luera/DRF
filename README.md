@@ -152,15 +152,14 @@ Endpoint:
 GET /api/tasks/<id>/history/ – Solo accesible por el creador o un admin.
 
 
-4. Límites de Asignación
-Un usuario no puede tener más de 10 tareas con estado IN_PROGRESS.
+4. Paginacion y filtrado
+Los GET respecto a las Task estan listadas y pueden filtrarse respectivamente por:
 
-Validación:
+        filterset_fields = ['status', 'priority', 'assigned_to', 'created_by', 'created_at']
 
-Si se excede el límite al asignar una nueva tarea, retornar error 429 Too Many Requests.
+retornando la informacion solicitada por los diferentes filtros ya señalados
 
-
-5. Notificaciones Automáticas
+6. Notificaciones Automáticas
 Al cambiar el estado de una tarea a COMPLETED:
 
 Se envía un email al usuario created_by (simulación con Celery o tarea asíncrona).
@@ -187,8 +186,12 @@ El campo completed_at se autocompleta con la fecha y hora actual.
 
 No se permite revertir una tarea a PENDING si han pasado más de 7 días desde su completación.
 
+8. Confirmacion por correo
+   
+Cuando se crea una nueva tarea se envia un correo al usuario asignado
 
-8. Integración Externa (Bonus)
+
+9. Integración Externa (Bonus)
 Endpoint:
 
 POST /api/tasks/import/ que acepta un archivo CSV para carga masiva de tareas.
