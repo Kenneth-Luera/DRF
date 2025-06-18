@@ -4,17 +4,17 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ('id', 'username','password', 'email', 'first_name', 'last_name')
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = '__all__'
 
-class AuditoriaSerializer(serializers.ModelSerializer):
+class TaskAuditLogSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Auditoria
-        fields = '__all__'
+        model = TaskAuditLog
+        fields = ['id', 'action', 'user', 'timestamp', 'changes']
 
 class NumeroSerializer(serializers.ModelSerializer):
     class Meta:

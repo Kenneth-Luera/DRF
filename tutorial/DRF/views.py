@@ -11,8 +11,16 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny 
 from django.utils import timezone
 from rest_framework.pagination import PageNumberPagination
+
+from django.views.generic import DeleteView
+from auditlog.mixins import LogAccessMixin
+from auditlog.models import LogEntry
+
 from rest_framework.views import APIView
-import time
+from datetime import datetime
+from datetime import date
+from django.core.mail import send_mail
+import datetime
 
 
 
@@ -21,63 +29,76 @@ class registerUserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
+
+class TaskAuditLogView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, pk):
+        if request.user.is_authenticated:
+            if request.user.is_staff == 1:    
+                task = get_object_or_404(Task, pk=pk)
+                logs = TaskAuditLog.objects.filter(task=task).order_by('-timestamp')
+                serializer = TaskAuditLogSerializer(logs, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "No tienes permiso para ver los registros de auditoría."}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response({"error": "No estas autenticado."}, status=status.HTTP_401_UNAUTHORIZED)        
+
+
+from django_filters.rest_framework import DjangoFilterBackend
+
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     pagination_class = PageNumberPagination
     pagination_class.page_size = 10
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status', 'priority', 'assigned_to', 'created_by', 'created_at']
 
-
-    def create(self, request, *args, **kwargs):
-        tiempo = request.data.get('due_date')
-        if tiempo < timezone.now():
-            return Response({"error": "La fecha de vencimiento no puede ser anterior a la fecha actual."}, status=status.HTTP_400_BAD_REQUEST)
-        elif request.user.is_staff == 0:
-            if request.data.get('priority') == 'CRITICAL':
-                return Response({"error": "No tienes permiso para crear tareas con prioridad crítica."}, status=status.HTTP_403_FORBIDDEN)
-            serializer = TaskSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save(created_by=request.user)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        elif request.data.get('priority') == 'URGENT':
-            max_date = timezone.now().date() + timedelta(days=3)
-            if tiempo > max_date:
-                return Response(
-                    {"error": "Las tareas URGENT no pueden tener una fecha de vencimiento mayor a 3 días desde hoy."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        user_task_count = Task.objects.filter(created_by=request.user).count()
-        if user_task_count >= 10:
-            return Response({"error": "Solo puedes tener un máximo de 10 tareas activas."},status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = TaskSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(created_by=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, *args, **kwargs):
-
         if request.user.is_authenticated:
             if request.user.is_staff == 0:
                 user = request.user.id
-                queryset = Task.objects.filter(created_by=user)
+                queseryset = Task.objects.filter(created_by=user , assigned_to=user)
             elif request.user.is_staff == 1:
-                queryset = Task.objects.all()
-            else:
-                return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
-
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = TaskSerializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-            serializer = TaskSerializer(queryset, many=True)
-            return Response(serializer.data)
+                queseryset = Task.objects.all()
         else:
-            return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
-    
+            return Response({"error": "No estas autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = TaskSerializer(queseryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        tiempo = request.data.get('due_date')
+        fecha_hoy = date.today()
+        fecha_date = datetime.datetime.strptime(tiempo, "%Y-%m-%dT%H:%M")
+        fecha_datetime = datetime.datetime.combine(fecha_hoy, datetime.time(0, 0))
+        if request.user.is_authenticated:
+                if fecha_date > fecha_datetime:
+                    return Response({"error": "La fecha de vencimiento no puede ser anterior a la fecha actual."}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    serializers = TaskSerializer(data=request.data)
+                    if serializers.is_valid():
+                        task = serializers.save(created_by=request.user)
+                        serializers.save(created_by=request.user)
+                        asunto = f"Nueva tarea asignada: {task.title}"
+                        mensaje = f"Hola {task.assigned_to.username},\nTienes una nueva tarea asignada:\nTítulo: {task.title}\nDescripción: {task.description}\nFecha de vencimiento: {task.due_date}\nPrioridad: {task.priority}\nSaludos,\nEquipo de Tareas"
+                        from_email = 'kennethpl30.5@gmail.com'
+                        destinatario = task.assigned_to.email
+                        try:
+                            send_mail(asunto, mensaje, from_email, [destinatario])
+                            return Response({"mensaje": "Tarea creada y correo enviado correctamente."}, status=status.HTTP_201_CREATED)
+                        except Exception as e:
+                            return Response({"error": f"Error al enviar el correo: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "No estas autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
+
     def patch(self, request, pk, *args, **kwargs):
             task = get_object_or_404(Task, pk=pk)
             if request.user != task.created_by and request.user != task.assigned_to:
@@ -88,41 +109,26 @@ class TaskViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def destroy(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            user = request.user.id
-            queryset = Task.objects.filter(created_by=user)
-            serializer = TaskSerializer(queryset, many=True)
-            return Response(serializer.data)
 
-class AuditoriaViewSets(viewsets.ModelViewSet):
-    queryset = Auditoria.objects.all()
-    serializer_class = AuditoriaSerializer
-    permission_classes = [AllowAny]
-    pagination_class = PageNumberPagination
-
-    def list(self, request, *args, **kwargs):
-        user_id = request.query_params.get('user_id')
-        task_id = request.query_params.get('task_id')
-
-        if not user_id:
-            return Response({"error": "El parámetro 'user_id' es obligatorio."}, status=400)
-
-        queryset = Auditoria.objects.filter(cambio_user_id=user_id)
-        if task_id:
-            queryset = queryset.filter(task_assigned_id=task_id)
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
+    def delete(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"error": "No estas autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            pk = kwargs.get('pk')
+            if not pk:
+                return Response({"error": "ID de tarea no proporcionado."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                task = Task.objects.get(pk=pk)
+                if request.user != task.created_by and request.user != task.assigned_to:
+                    return Response({"error": "No tienes permiso para eliminar esta tarea."}, status=status.HTTP_403_FORBIDDEN)
+                task.delete()
+                return Response({"mensaje": "Tarea eliminada correctamente."}, status=status.HTTP_204_NO_CONTENT)
+            except Task.DoesNotExist:
+                return Response({"error": "Tarea no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
 class TaskMetricsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         tasks = Task.objects.filter(status='COMPLETED')
@@ -139,8 +145,6 @@ class TaskMetricsView(APIView):
             "promedio_minutos": promedio_minutos
         })
 
-
-
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -148,7 +152,7 @@ from rest_framework.response import Response
 import csv
 from io import TextIOWrapper
 from .models import Task
-from datetime import datetime
+
 from pika import BlockingConnection, ConnectionParameters
 
 class ImportTaskCSVView(APIView):
@@ -175,7 +179,7 @@ class ImportTaskCSVView(APIView):
                 errores.append(f"Fila {i+2}: Faltan columnas requeridas.")
                 return Response({"error": "Corrige lo requerido para enviar."},status=status.HTTP_400_BAD_REQUEST)
             try:
-                due_date = datetime.strptime(row['due_date'], '%b %d, %Y').date()
+                due_date = datetime.strptime(row['due_date'], "%d/%m/%Y").date()
                 Task.objects.create(
                     title=row['title'],
                     description=row['description'],
@@ -192,7 +196,8 @@ class ImportTaskCSVView(APIView):
         msg = {"mensaje": f"{tasks_created} tareas importadas correctamente."}
         if errores:
             msg["errores"] = errores
-        return Response(msg)
+        return Response(msg)    
+import time
 
 class ExportTaskCSVView(APIView):
     permission_classes = [IsAuthenticated]

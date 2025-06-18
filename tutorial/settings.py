@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'tutorial.DRF',
+    'auditlog',
+    'django_filters',
     'django.contrib.admin',
     'drf_spectacular',
     'django.contrib.auth',
@@ -54,7 +56,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination'
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 MIDDLEWARE = [
@@ -65,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tutorial.DRF.middleware.CurrentUserMiddleware',
 ]
 
 ROOT_URLCONF = 'tutorial.urls'
@@ -101,6 +105,21 @@ DATABASES = {
     }
 }
 
+# zona email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'kennethpl30.5@gmail.com'
+EMAIL_HOST_PASSWORD = 'upapngctcdptnnpy'
+DEFAULT_FROM_EMAIL = 'kennethpl30.5@gmail.com'
+
+AUDITLOG_CONFIG = {
+   'DEFAULT': {
+       'user_field': 'request.user.pk',  # Opcional: Campo para el usuario que realiza el cambio
+       'user_name_field': 'request.user.username', # Opcional: Campo para el nombre del usuario
+   }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -147,7 +166,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,

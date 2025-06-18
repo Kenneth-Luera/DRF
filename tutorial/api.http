@@ -9,23 +9,23 @@ Content-Type: application/json
 ###
 
 GET http://127.0.0.1:8000/api/api/TaskViewSet/ HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3MDYzNDY3LCJpYXQiOjE3NDcwNjMxNjcsImp0aSI6ImJiZWFlMDdmYzdjODRiN2U4MjU5OWUxOWZhNjUwMzYxIiwidXNlcl9pZCI6MX0.AtG3cKvEXnFgtsCHmiTgvW-V6S1CZcBjz271vDsb8cU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NTgwMzk1LCJpYXQiOjE3NDk1ODAwOTUsImp0aSI6IjA3OGExMGUwOGQxMjQ4ZjI5ZjdmNTdlNWRkMzU2ZDUyIiwidXNlcl9pZCI6Mn0.PSZamnHIQyw5sSGJltI1R_KpJiTtkBsaSS9xgKNixXE
 
 ###
 
 POST http://127.0.0.1:8000/api/api/TaskViewSet/ HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ3MDYzNTMwLCJpYXQiOjE3NDcwNjMyMzAsImp0aSI6IjA4YzlmNzAzY2JmMzQ3MTU4YmFiNzQ2NWYzYjEyMzViIiwidXNlcl9pZCI6MX0.map1ykyLovqVlYX2ZtD57TdNPWqzPOMU60d_X_Gy154
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NjUzNzI4LCJpYXQiOjE3NDk2NTM0MjgsImp0aSI6IjU4ZWE3NzU5MjBlZTQ1YWY5M2UyOTNjMTYyMzNmZjQ1IiwidXNlcl9pZCI6Mn0.XhwXahaUJOX6g_jqRSGwLkEHfGti9d_Y0y_e1E3ktZg
 
 Content-Type: application/json
 
 {
-"title":"Test",
-"description":"Pruebo de testeo",
-"due_date":"2023-10-12",
-"created_by":"1",
-"assigned_to":"1",
-"status":"PENDING",
-"priority":"high"
+    "title": "prueba",
+    "description": "prueba de test post   sss",
+    "due_date": "2023-10-14",
+    "status": "PENDING",
+    "priority": "HIGH",
+    "created_by": "2",
+    "assigned_to": "4"
 }
 
 ###

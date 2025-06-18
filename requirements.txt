@@ -1,9 +1,11 @@
-django
+django== 5.1
 djangorestframework
 setuptools
 djangorestframework-simplejwt
+django-auditlog
 mysqlclient
 drf-spectacular
 pandas
 pika
 celery
+django-filter
