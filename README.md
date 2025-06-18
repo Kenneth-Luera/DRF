@@ -26,7 +26,13 @@ cd DRF
 Crea un entorno virtual (recomendado):
 
 bash
-venv\Scripts\activate
+
+    source venv/Scripts/activate
+
+WSL
+
+    source venv/bin/activate
+
 Instala las dependencias:
 
 bash
