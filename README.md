@@ -141,6 +141,7 @@ Si una tarea tiene la etiqueta "URGENTE", su due_date no debe ser mayor a 3 día
 
 
 3. Historial de Cambios (Auditoría)
+   
 Modelo TaskHistory que registra:
 
 Cambios en status, assigned_to y priority.
@@ -153,6 +154,7 @@ GET /api/tasks/<id>/history/ – Solo accesible por el creador o un admin.
 
 
 4. Paginacion y filtrado
+   
 Los GET respecto a las Task estan listadas y pueden filtrarse respectivamente por:
 
         filterset_fields = ['status', 'priority', 'assigned_to', 'created_by', 'created_at']
@@ -168,7 +170,7 @@ Si el due_date está a menos de 24 horas y la tarea no está completada:
 
 Enviar notificación por websocket o email (bonus: usar django-channels).
 
-6. Reportes
+7. Reportes
 Endpoint:
 
 GET /api/tasks/metrics/ (solo para admins).
@@ -179,19 +181,19 @@ Cantidad de tareas completadas vs. pendientes por usuario.
 
 Promedio de tiempo de completación agrupado por prioridad.
 
-7. Validaciones Avanzadas
+8. Validaciones Avanzadas
 Si una tarea es marcada como COMPLETED:
 
 El campo completed_at se autocompleta con la fecha y hora actual.
 
 No se permite revertir una tarea a PENDING si han pasado más de 7 días desde su completación.
 
-8. Confirmacion por correo
+9. Confirmacion por correo
    
 Cuando se crea una nueva tarea se envia un correo al usuario asignado
 
 
-9. Integración Externa (Bonus)
+10. Integración Externa (Bonus)
 Endpoint:
 
 POST /api/tasks/import/ que acepta un archivo CSV para carga masiva de tareas.
