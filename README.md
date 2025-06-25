@@ -222,3 +222,6 @@ Puntos Clave a Evaluar
 - Optimización de consultas: Uso de annotate y aggregate en reportes.
 
 - Seguridad: Control de roles para acceso y operaciones sensibles (como prioridades CRITICAL).
+
+
+* Se adjunta la collection.json de postman para verificar la informacion mas sencillo
