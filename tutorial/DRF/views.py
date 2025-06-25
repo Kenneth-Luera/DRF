@@ -12,23 +12,97 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from rest_framework.pagination import PageNumberPagination
 
-from django.views.generic import DeleteView
-from auditlog.mixins import LogAccessMixin
-from auditlog.models import LogEntry
-
 from rest_framework.views import APIView
 from datetime import datetime
 from datetime import date
 from django.core.mail import send_mail
-import datetime
+
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+import csv
+from io import TextIOWrapper
+
+
 
 
 
 class registerUserViewSet(viewsets.ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny]
+    http_method_names = ['post']
 
+class UsersViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    http_method_names = ['get']
+    
+
+
+
+
+class ExportTaskCSVView(APIView):
+    parser_classes = [MultiPartParser]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        csv_file = request.FILES.get('file')
+        if not csv_file:
+            return Response({"error": "No se envió ningún archivo."}, status=400)
+
+        data = TextIOWrapper(csv_file.file, encoding='utf-8')
+        lines = list(data)
+        lines[0] = lines[0].replace('\ufeff', '').strip() + '\n'
+        reader = csv.DictReader(lines, delimiter=';', skipinitialspace=True)
+        tasks_created = 0
+        errores = []
+        for i, row in enumerate(reader):
+            if i >= 100:
+                break
+            row = {k.strip(): v for k, v in row.items() if k}
+            columnas = ['title', 'description', 'assigned_to_id', 'created_by_id', 'due_date', 'status', 'priority']
+            if not all(k in row for k in columnas):
+                errores.append(f"Fila {i+2}: Faltan columnas requeridas.")
+                return Response({"error": "Corrige lo requerido para enviar."},status=status.HTTP_400_BAD_REQUEST)
+            try:
+                due_date = datetime.strptime(row['due_date'], "%Y-%m-%dT%H:%M")
+                Task.objects.create(
+                    title=row['title'],
+                    description=row['description'],
+                    assigned_to_id=row['assigned_to_id'] or None,
+                    created_by_id=row['created_by_id'],
+                    due_date=due_date,
+                    status=row['status'],
+                    priority=row['priority']
+                )
+                tasks_created += 1
+            except Exception as e:
+                errores.append(f"Fila {i+2}: {str(e)}")
+
+        msg = {"mensaje": f"{tasks_created} tareas importadas correctamente."}
+        if errores:
+            msg["errores"] = errores
+        return Response(msg)    
+
+import time
+
+class ImportTaskCSVView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, format=None):
+        tasks = Task.objects.all()
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="tasks.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Title', 'Description', 'Assigned To', 'Created By', 'Due Date', 'Status', 'Priority'])
+        for task in tasks:
+            writer.writerow([task.id, task.title, task.description, task.assigned_to_id, task.created_by_id, task.due_date, task.status, task.priority])
+        return response
 
 class TaskAuditLogView(APIView):
     permission_classes = [IsAuthenticated]
@@ -48,6 +122,7 @@ class TaskAuditLogView(APIView):
 
 
 from django_filters.rest_framework import DjangoFilterBackend
+import datetime
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
@@ -78,7 +153,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         fecha_date = datetime.datetime.strptime(tiempo, "%Y-%m-%dT%H:%M")
         fecha_datetime = datetime.datetime.combine(fecha_hoy, datetime.time(0, 0))
         if request.user.is_authenticated:
-                if fecha_date > fecha_datetime:
+                if fecha_date < fecha_datetime:
                     return Response({"error": "La fecha de vencimiento no puede ser anterior a la fecha actual."}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializers = TaskSerializer(data=request.data)
@@ -99,16 +174,21 @@ class TaskViewSet(viewsets.ModelViewSet):
         else:
             return Response({"error": "No estas autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    def patch(self, request, pk, *args, **kwargs):
-            task = get_object_or_404(Task, pk=pk)
-            if request.user != task.created_by and request.user != task.assigned_to:
-                return Response({"error": "No tienes permiso para editar esta tarea."}, status=status.HTTP_403_FORBIDDEN)
-            serializer = TaskSerializer(task, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, pk, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"error": "No estas autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            try:
+                task = Task.objects.get(pk=pk)
+                if request.user != task.created_by and request.user != task.assigned_to:
+                    return Response({"error": "No tienes permiso para editar esta tarea."}, status=status.HTTP_403_FORBIDDEN)
+                serializer = TaskSerializer(task, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Task.DoesNotExist:
+                return Response({"error": "Tarea no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -144,72 +224,3 @@ class TaskMetricsView(APIView):
             "tareas_completadas": count,
             "promedio_minutos": promedio_minutos
         })
-
-from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-import csv
-from io import TextIOWrapper
-from .models import Task
-
-from pika import BlockingConnection, ConnectionParameters
-
-class ImportTaskCSVView(APIView):
-    parser_classes = [MultiPartParser]
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, format=None):
-        csv_file = request.FILES.get('file')
-        if not csv_file:
-            return Response({"error": "No se envió ningún archivo."}, status=400)
-
-        data = TextIOWrapper(csv_file.file, encoding='utf-8')
-        lines = list(data)
-        lines[0] = lines[0].replace('\ufeff', '').strip() + '\n'
-        reader = csv.DictReader(lines, delimiter=';', skipinitialspace=True)
-        tasks_created = 0
-        errores = []
-        for i, row in enumerate(reader):
-            if i >= 100:
-                break
-            row = {k.strip(): v for k, v in row.items() if k}
-            columnas = ['title', 'description', 'assigned_to_id', 'created_by_id', 'due_date', 'status', 'priority']
-            if not all(k in row for k in columnas):
-                errores.append(f"Fila {i+2}: Faltan columnas requeridas.")
-                return Response({"error": "Corrige lo requerido para enviar."},status=status.HTTP_400_BAD_REQUEST)
-            try:
-                due_date = datetime.strptime(row['due_date'], "%d/%m/%Y").date()
-                Task.objects.create(
-                    title=row['title'],
-                    description=row['description'],
-                    assigned_to_id=row['assigned_to_id'] or None,
-                    created_by_id=row['created_by_id'],
-                    due_date=due_date,
-                    status=row['status'],
-                    priority=row['priority']
-                )
-                tasks_created += 1
-            except Exception as e:
-                errores.append(f"Fila {i+2}: {str(e)}")
-
-        msg = {"mensaje": f"{tasks_created} tareas importadas correctamente."}
-        if errores:
-            msg["errores"] = errores
-        return Response(msg)    
-import time
-
-class ExportTaskCSVView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def get(self, request, format=None):
-        time.sleep(15)
-        tasks = Task.objects.all()
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="tasks.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['ID', 'Title', 'Description', 'Assigned To', 'Created By', 'Due Date', 'Status', 'Priority'])
-        for task in tasks:
-            writer.writerow([task.id, task.title, task.description, task.assigned_to_id, task.created_by_id, task.due_date, task.status, task.priority])
-        return response

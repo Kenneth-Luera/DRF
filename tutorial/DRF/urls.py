@@ -8,6 +8,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 router = DefaultRouter()
 router.register('register', registerUserViewSet, basename='register')
 router.register('TaskViewSet', TaskViewSet, basename='createTask')
+router.register('users', UsersViewSet, basename='userList')
 
 
 
@@ -22,8 +23,8 @@ urlpatterns = [
     path('api/tasks/metrics/', TaskMetricsView.as_view(), name='task-metrics'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/task/<int:pk>/', TaskViewSet.as_view({'get': 'retrieve', 'patch': 'update', 'delete': 'destroy'}), name='task-detail'),
-    path('api/tasks/import_csv/', ImportTaskCSVView.as_view(), name='import-tasks-csv'),
-    path('api/tasks/export_csv/', ExportTaskCSVView.as_view(), name='export-tasks-csv'),
+    path('api/tasks/export_csv/', ExportTaskCSVView.as_view(), name='import-tasks-csv'),
+    path('api/tasks/import_csv/', ImportTaskCSVView.as_view(), name='export-tasks-csv'),
     ]
 """    path('api/task/<int:pk>/', TaskViewSet.as_view({'get': 'retrieve', 'patch': 'update', 'delete': 'destroy'}), name='task-detail'),
     path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

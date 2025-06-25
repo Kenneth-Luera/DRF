@@ -5,6 +5,6 @@ class CurrentUserMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        set_current_user(getattr(request, 'user', None))
+        set_current_user(request.user)
         response = self.get_response(request)
         return response
